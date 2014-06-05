@@ -41,26 +41,26 @@ public class TestInterpolator {
         interpolator = new Interpolator<ValueMap>();
         
         interpolator.when("[a-zA-Z0-9_]+").prefixedBy(":").handleWith(new Substitutor<ValueMap>() {
-            public String substitute(String captured, ValueMap arg) {
-                return arg.getForPrefixed(captured);
+            public String substitute(String captured, ValueMap map) {
+                return map.getForPrefixed(captured);
             }
         });
         
         interpolator.when("[0-9]+").enclosedBy("*[").and("]").handleWith(new Substitutor<ValueMap>() {
-            public String substitute(String captured, ValueMap arg) {
-                return arg.getForPrefixedBracketEnclosed(captured);
+            public String substitute(String captured, ValueMap map) {
+                return map.getForPrefixedBracketEnclosed(captured);
             }
         });
         
         interpolator.when().enclosedBy("{").and("}").handleWith(new Substitutor<ValueMap>() {
-            public String substitute(String captured, ValueMap arg) {
-                return arg.getForBraceEnclosed(captured);
+            public String substitute(String captured, ValueMap map) {
+                return map.getForBraceEnclosed(captured);
             }
         });
         
         interpolator.when().enclosedBy("[").and("]").handleWith(new Substitutor<ValueMap>() {
-            public String substitute(String captured, ValueMap arg) {
-                return arg.getForBracketEnclosed(captured);
+            public String substitute(String captured, ValueMap map) {
+                return map.getForBracketEnclosed(captured);
             }
         });
         
