@@ -39,7 +39,7 @@ interpolator.when().enclosedBy("#{").and("}")
 ```
 
 In the snippet above, we are configuring the interpolator such that it
-will substitute anything enclosed by *#{}*. The *handleWith()* method
+will substitute anything enclosed by *#{* and *}*. The *handleWith()* method
 accepts a **Substitutor**. The Substitutor is also generic, and its 
 type parameter must match the Interpolator's type parameter. In the
 Subsitutor's *subsitute()* method, the *captured* argument is the value
@@ -50,9 +50,8 @@ Next, you call the *interpolate()* method of the interpolator:
 
 ```java
 interpolator.interpolate("Hello #{name}!", "World");
+//returns "Hello World!"
 ```
-
-The call to the *interpolate()* method above will return *"Hello World!"*.
 
 You can also substitute values prefixed by a specific String:
 
@@ -73,9 +72,8 @@ containing both patterns:
 
 ```java
 interpolator.interpolate("Hello :name #{name}!", "foo");
+//returns "Hello foo foo!"
 ```
-
-The call to the *interpolate()* method above will return *"Hello foo foo!"*.
 
 In practice, you will not be passing along a String as an argument to the 
 *interpolate()* method. You will likely be using a Map, or some other more
@@ -105,10 +103,8 @@ We can then use the interpolator as follows:
 ```java
 interpolator.interpolate("Hello #{0}, #{1}, but not #{you}.", 
     new String[]{"John", "Jane"});
+//returns "Hello John, Jane, but not #{you}."
 ```
-
-The call to the *interpolate()* method above will return 
-*"Hello John, Jane, but not #{you}."*.
 
 We could also have specified that any number of digits from 0-9
 be matched, by using *"[0-9]+"* as an argument, etc.
@@ -143,16 +139,19 @@ substitution pattern, they act as genuine escape characters:
 
 ```java
 interpolator.interpolate("Hello #{name}, but not ^#{you} or ^.", "World");
+//returns "Hello World, but not #{you} or ^."
 ```
 
-The call to the *interpolate()* method above will return 
-*"Hello World, but not #{you} or ^."*.
-
 If you want to produce an escape character next to a substitution 
-pattern, you can escape the escape. For example, *"Hello ^^ ^^#{name}"*
-will become *"Hello ^^ ^World"* after interpolation. Notice that the escape 
-characters on their own--that are not next to a substitution pattern--are 
-not treated as escape characters.
+pattern, you can escape the escape. For example:
+
+```java
+interpolator.interpolate("Hello ^^ ^^#{name}", "World");
+//returns "Hello ^^ ^World"
+``` 
+
+Notice that the escape characters on their own--that are not next to a 
+substitution pattern--are not treated as escape characters.
 
 
 
