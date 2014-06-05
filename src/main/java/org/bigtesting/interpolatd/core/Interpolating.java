@@ -21,7 +21,7 @@ import java.util.List;
  * 
  * @author Luis Antunes
  */
-public interface Interpolating {
+public interface Interpolating<T> {
 
-    List<Substitution> interpolate(String toInterpolate, Object arg);
+    List<Substitution> interpolate(String toInterpolate, T arg);
 }

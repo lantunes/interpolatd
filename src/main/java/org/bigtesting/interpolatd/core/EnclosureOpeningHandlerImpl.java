@@ -22,13 +22,13 @@ import org.bigtesting.interpolatd.EnclosureOpeningHandler;
  * 
  * @author Luis Antunes
  */
-public class EnclosureOpeningHandlerImpl implements EnclosureOpeningHandler {
+public class EnclosureOpeningHandlerImpl<T> implements EnclosureOpeningHandler<T> {
 
     private final String opening;
     
     private final String characterClass;
     
-    private EnclosureClosingHandlerImpl closingHandler;
+    private EnclosureClosingHandlerImpl<T> closingHandler;
     
     public EnclosureOpeningHandlerImpl(String opening, String characterClass) {
         
@@ -36,15 +36,15 @@ public class EnclosureOpeningHandlerImpl implements EnclosureOpeningHandler {
         this.characterClass = characterClass;
     }
 
-    public EnclosureClosingHandler and(String closing) {
+    public EnclosureClosingHandler<T> and(String closing) {
         
-        EnclosureClosingHandlerImpl closingHandler = 
-                new EnclosureClosingHandlerImpl(opening, closing, characterClass);
+        EnclosureClosingHandlerImpl<T> closingHandler = 
+                new EnclosureClosingHandlerImpl<T>(opening, closing, characterClass);
         this.closingHandler = closingHandler;
         return closingHandler;
     }
     
-    public EnclosureClosingHandlerImpl getEnclosureClosingHandler() {
+    public EnclosureClosingHandlerImpl<T> getEnclosureClosingHandler() {
         
         return closingHandler;
     }

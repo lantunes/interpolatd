@@ -26,11 +26,11 @@ import org.bigtesting.interpolatd.PrefixHandler;
  * 
  * @author Luis Antunes
  */
-public class InterpolationHandlerImpl implements InterpolationHandler, Interpolating {
+public class InterpolationHandlerImpl<T> implements InterpolationHandler<T>, Interpolating<T> {
 
-    private PrefixHandlerImpl prefixHandler;
+    private PrefixHandlerImpl<T> prefixHandler;
     
-    private EnclosureOpeningHandlerImpl enclosureOpeningHandler;
+    private EnclosureOpeningHandlerImpl<T> enclosureOpeningHandler;
     
     private final String characterClass;
     
@@ -42,22 +42,22 @@ public class InterpolationHandlerImpl implements InterpolationHandler, Interpola
         this.characterClass = characterClass;
     }
     
-    public PrefixHandler prefixedBy(String prefix) {
+    public PrefixHandler<T> prefixedBy(String prefix) {
         
-        PrefixHandlerImpl prefixHandler = new PrefixHandlerImpl(prefix, characterClass);
+        PrefixHandlerImpl<T> prefixHandler = new PrefixHandlerImpl<T>(prefix, characterClass);
         this.prefixHandler = prefixHandler;
         return prefixHandler;
     }
     
-    public EnclosureOpeningHandler enclosedBy(String opening) {
+    public EnclosureOpeningHandler<T> enclosedBy(String opening) {
         
-        EnclosureOpeningHandlerImpl enclosureOpeningHandler = 
-                new EnclosureOpeningHandlerImpl(opening, characterClass);
+        EnclosureOpeningHandlerImpl<T> enclosureOpeningHandler = 
+                new EnclosureOpeningHandlerImpl<T>(opening, characterClass);
         this.enclosureOpeningHandler = enclosureOpeningHandler;
         return enclosureOpeningHandler;
     }
     
-    public List<Substitution> interpolate(String toInterpolate, Object arg) {
+    public List<Substitution> interpolate(String toInterpolate, T arg) {
         
         List<Substitution> substitutions = new ArrayList<Substitution>();
         if (prefixHandler != null) {

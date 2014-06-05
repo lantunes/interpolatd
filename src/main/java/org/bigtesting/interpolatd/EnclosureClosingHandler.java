@@ -19,7 +19,7 @@ package org.bigtesting.interpolatd;
  * 
  * @author Luis Antunes
  */
-public interface EnclosureClosingHandler extends SubstitutionHandler {
+public interface EnclosureClosingHandler<T> extends SubstitutionHandler<T> {
     /*
      * Just a marker interface for now 
      */

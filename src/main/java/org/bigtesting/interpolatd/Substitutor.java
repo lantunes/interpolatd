@@ -19,7 +19,7 @@ package org.bigtesting.interpolatd;
  * 
  * @author Luis Antunes
  */
-public interface Substitutor {
+public interface Substitutor<T> {
 
-    String substitute(String captured, Object arg);
+    String substitute(String captured, T arg);
 }

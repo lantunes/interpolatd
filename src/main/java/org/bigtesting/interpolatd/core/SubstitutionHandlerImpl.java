@@ -27,11 +27,11 @@ import org.bigtesting.interpolatd.Substitutor;
  * 
  * @author Luis Antunes
  */
-public abstract class SubstitutionHandlerImpl implements SubstitutionHandler, Interpolating {
+public abstract class SubstitutionHandlerImpl<T> implements SubstitutionHandler<T>, Interpolating<T> {
 
-    protected Substitutor substitutor;
+    protected Substitutor<T> substitutor;
     
-    public void handleWith(Substitutor substitutor) {
+    public void handleWith(Substitutor<T> substitutor) {
         
         this.substitutor = substitutor;
     }
@@ -40,7 +40,7 @@ public abstract class SubstitutionHandlerImpl implements SubstitutionHandler, In
     
     protected abstract String getCaptured(String found);
     
-    public List<Substitution> interpolate(String toInterpolate, Object arg) {
+    public List<Substitution> interpolate(String toInterpolate, T arg) {
         
         List<Substitution> substitutions = new ArrayList<Substitution>(); 
         if (substitutor != null) {

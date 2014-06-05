@@ -31,49 +31,48 @@ import org.junit.Test;
  */
 public class TestInterpolator {
     
-    private Interpolator interpolator;
+    private Interpolator<ValueMap> interpolator;
     
-    private Map<String, Value> map;
+    private ValueMap map;
     
     @Before
-    @SuppressWarnings("unchecked")
     public void beforeEachTest() {
         
-        interpolator = new Interpolator();
+        interpolator = new Interpolator<ValueMap>();
         
-        interpolator.when("[a-zA-Z0-9_]").prefixedBy(":").handleWith(new Substitutor() {
-            public String substitute(String captured, Object arg) {
-                return ((Map<String, Value>)arg).get(captured).getForPrefix();
+        interpolator.when("[a-zA-Z0-9_]+").prefixedBy(":").handleWith(new Substitutor<ValueMap>() {
+            public String substitute(String captured, ValueMap arg) {
+                return arg.getForPrefixed(captured);
             }
         });
         
-        interpolator.when("[0-9]").enclosedBy("*[").and("]").handleWith(new Substitutor() {
-            public String substitute(String captured, Object arg) {
-                return ((Map<String, Value>)arg).get(captured).getForPrefixedBracketEnclosed();
+        interpolator.when("[0-9]+").enclosedBy("*[").and("]").handleWith(new Substitutor<ValueMap>() {
+            public String substitute(String captured, ValueMap arg) {
+                return arg.getForPrefixedBracketEnclosed(captured);
             }
         });
         
-        interpolator.when().enclosedBy("{").and("}").handleWith(new Substitutor() {
-            public String substitute(String captured, Object arg) {
-                return ((Map<String, Value>)arg).get(captured).getForBraceEnclosed();
+        interpolator.when().enclosedBy("{").and("}").handleWith(new Substitutor<ValueMap>() {
+            public String substitute(String captured, ValueMap arg) {
+                return arg.getForBraceEnclosed(captured);
             }
         });
         
-        interpolator.when().enclosedBy("[").and("]").handleWith(new Substitutor() {
-            public String substitute(String captured, Object arg) {
-                return ((Map<String, Value>)arg).get(captured).getForBracketEnclosed();
+        interpolator.when().enclosedBy("[").and("]").handleWith(new Substitutor<ValueMap>() {
+            public String substitute(String captured, ValueMap arg) {
+                return arg.getForBracketEnclosed(captured);
             }
         });
         
         interpolator.escapeWith("^");
         
-        map = new HashMap<String, Value>();
+        map = new ValueMap();
     }
     
     @Test
     public void testStringReturnedUnmodifiedWhenNoSubstitutionsArePresent() {
         
-        map.put("foo", new Value().forPrefix("bar"));
+        map.put("foo", new Value().forPrefixed("bar"));
         
         assertEquals("Hello World!", 
                 interpolator.interpolate("Hello World!", map));
@@ -82,7 +81,7 @@ public class TestInterpolator {
     @Test
     public void testSinglePrefixedSubstitued() {
         
-        map.put("name", new Value().forPrefix("Tim"));
+        map.put("name", new Value().forPrefixed("Tim"));
         
         assertEquals("Hello Tim", 
                 interpolator.interpolate("Hello :name", map));
@@ -91,7 +90,7 @@ public class TestInterpolator {
     @Test
     public void testSinglePrefixedSubstituedInPresenceOfOtherStandalonePrefixes() {
         
-        map.put("name", new Value().forPrefix("Tim"));
+        map.put("name", new Value().forPrefixed("Tim"));
         
         assertEquals("Hello : Tim :", 
                 interpolator.interpolate("Hello : :name :", map));
@@ -100,7 +99,7 @@ public class TestInterpolator {
     @Test
     public void testSinglePrefixedDoublyPrefixedIsSubstitued() {
         
-        map.put("name", new Value().forPrefix("Tim"));
+        map.put("name", new Value().forPrefixed("Tim"));
         
         assertEquals("Hello :Tim", 
                 interpolator.interpolate("Hello ::name", map));
@@ -109,7 +108,7 @@ public class TestInterpolator {
     @Test
     public void testSinglePrefixedEnclosedByPrefixesIsSubstitued() {
         
-        map.put("name", new Value().forPrefix("Tim"));
+        map.put("name", new Value().forPrefixed("Tim"));
         
         assertEquals("Hello :Tim:", 
                 interpolator.interpolate("Hello ::name:", map));
@@ -118,7 +117,7 @@ public class TestInterpolator {
     @Test
     public void testSinglePrefixedSubstituedInPresenceOfOtherPrefixedTerms() {
         
-        map.put("name", new Value().forPrefix("Tim"));
+        map.put("name", new Value().forPrefixed("Tim"));
         
         assertEquals("Hello :someTerm Tim", 
                 interpolator.interpolate("Hello :someTerm :name", map));
@@ -127,7 +126,7 @@ public class TestInterpolator {
     @Test
     public void testSinglePrefixedSubstituedWithPrefixContainingValue() {
         
-        map.put("name", new Value().forPrefix(":Tim"));
+        map.put("name", new Value().forPrefixed(":Tim"));
         
         assertEquals("Hello :Tim", 
                 interpolator.interpolate("Hello :name", map));
@@ -136,13 +135,8 @@ public class TestInterpolator {
     @Test
     public void testSimilarPrefixedSubstitued() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/Tim/John");
-//        when(req.getRoute()).thenReturn(new Route("/name/:name/:name1"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("Tim"));
-        map.put("name1", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("Tim"));
+        map.put("name1", new Value().forPrefixed("John"));
         
         assertEquals("Hello Tim John", 
                 interpolator.interpolate("Hello :name :name1", map));
@@ -151,12 +145,7 @@ public class TestInterpolator {
     @Test
     public void testSimilarPrefixedNotSubstitued() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/Tim");
-//        when(req.getRoute()).thenReturn(new Route("/name/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("Tim"));
+        map.put("name", new Value().forPrefixed("Tim"));
         
         assertEquals("Hello :name1", 
                 interpolator.interpolate("Hello :name1", map));
@@ -165,13 +154,8 @@ public class TestInterpolator {
     @Test
     public void testPrefixedSubstitutedWithNameOfAnotherPrefix() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/:id/1");
-//        when(req.getRoute()).thenReturn(new Route("/name/:name/:id"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix(":id"));
-        map.put("id", new Value().forPrefix(":1"));
+        map.put("name", new Value().forPrefixed(":id"));
+        map.put("id", new Value().forPrefixed("1"));
         
         assertEquals("Hello :id 1", 
                 interpolator.interpolate("Hello :name :id", map));
@@ -180,13 +164,8 @@ public class TestInterpolator {
     @Test
     public void testMultiplePrefixedSubstitued() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/John/Doe");
-//        when(req.getRoute()).thenReturn(new Route("/name/:firstName/:lastName"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("firstName", new Value().forPrefix("John"));
-        map.put("lastName", new Value().forPrefix("Doe"));
+        map.put("firstName", new Value().forPrefixed("John"));
+        map.put("lastName", new Value().forPrefixed("Doe"));
         
         assertEquals("Hello John Doe", 
                 interpolator.interpolate("Hello :firstName :lastName", map));
@@ -195,13 +174,8 @@ public class TestInterpolator {
     @Test
     public void testMultiplePrefixedSubstituedInPresenceOfOtherPrefixed() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/John/Doe");
-//        when(req.getRoute()).thenReturn(new Route("/name/:firstName/:lastName"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("firstName", new Value().forPrefix("John"));
-        map.put("lastName", new Value().forPrefix("Doe"));
+        map.put("firstName", new Value().forPrefixed("John"));
+        map.put("lastName", new Value().forPrefixed("Doe"));
         
         assertEquals("Hello : John : Doe :", 
                 interpolator.interpolate("Hello : :firstName : :lastName :", map));
@@ -210,13 +184,8 @@ public class TestInterpolator {
     @Test
     public void testMultiplePrefixedSubstituedWithPrefixContainingValues() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/:John/:Doe");
-//        when(req.getRoute()).thenReturn(new Route("/name/:firstName/:lastName"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("firstName", new Value().forPrefix(":John"));
-        map.put("lastName", new Value().forPrefix(":Doe"));
+        map.put("firstName", new Value().forPrefixed(":John"));
+        map.put("lastName", new Value().forPrefixed(":Doe"));
         
         assertEquals("Hello :John :Doe", 
                 interpolator.interpolate("Hello :firstName :lastName", map));
@@ -224,13 +193,6 @@ public class TestInterpolator {
     
     @Test
     public void testSingleBraceEnclosedSubstitued() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("name", "Tim");
-//        when(req.getSession()).thenReturn(session);
         
         map.put("name", new Value().forBraceEnclosed("Tim"));
         
@@ -241,14 +203,7 @@ public class TestInterpolator {
     @Test
     public void testBraceEnclosedWithPrefixedNameNotSubstituted() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        Session session = new Session();
-//        session.set("name", ":name");
-//        when(req.getSession()).thenReturn(session);
-        
-        map.put("name", new Value().forPrefix("John")
+        map.put("name", new Value().forPrefixed("John")
                                    .forBraceEnclosed(":name"));
         
         assertEquals("Hello :name", 
@@ -258,14 +213,7 @@ public class TestInterpolator {
     @Test
     public void testPrefixedWithBraceEnclosedNameNotSubstituted() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/{name}");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        Session session = new Session();
-//        session.set("name", "Tim");
-//        when(req.getSession()).thenReturn(session);
-        
-        map.put("name", new Value().forPrefix("{name}")
+        map.put("name", new Value().forPrefixed("{name}")
                                    .forBraceEnclosed("Tim"));
         
         assertEquals("Hello {name}", 
@@ -274,13 +222,6 @@ public class TestInterpolator {
     
     @Test
     public void testSingleBraceEnclosedSubstituedInPresenceOfOtherBraces() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("name", "Tim");
-//        when(req.getSession()).thenReturn(session);
         
         map.put("name", new Value().forBraceEnclosed("Tim"));
         
@@ -291,13 +232,6 @@ public class TestInterpolator {
     @Test
     public void testSingleBraceEnclosedSubstituedInPresenceOfOtherBraces_NoSpaces() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("name", "Tim");
-//        when(req.getSession()).thenReturn(session);
-        
         map.put("name", new Value().forBraceEnclosed("Tim"));
         
         assertEquals("Hello {Tim} {", 
@@ -306,13 +240,6 @@ public class TestInterpolator {
     
     @Test
     public void testSingleBraceEnclosedSubstituedInPresenceOfOtherBraceEnclosedTerms() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("name", "Tim");
-//        when(req.getSession()).thenReturn(session);
         
         map.put("name", new Value().forBraceEnclosed("Tim"));
         
@@ -323,13 +250,6 @@ public class TestInterpolator {
     @Test
     public void testSingleBraceEnclosedSubstituedWithBraceEnclosedValue() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("name", "{Tim}");
-//        when(req.getSession()).thenReturn(session);
-        
         map.put("name", new Value().forBraceEnclosed("{Tim}"));
         
         assertEquals("Hello {Tim}", 
@@ -338,14 +258,6 @@ public class TestInterpolator {
     
     @Test
     public void testMultipleBraceEnclosedSubstitued() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("firstName", "John");
-//        session.set("lastName", "Doe");
-//        when(req.getSession()).thenReturn(session);
         
         map.put("firstName", new Value().forBraceEnclosed("John"));
         map.put("lastName", new Value().forBraceEnclosed("Doe"));
@@ -357,14 +269,6 @@ public class TestInterpolator {
     @Test
     public void testMultipleBraceEnclosedSubstituedInPresenceOfOtherBraces() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("firstName", "John");
-//        session.set("lastName", "Doe");
-//        when(req.getSession()).thenReturn(session);
-        
         map.put("firstName", new Value().forBraceEnclosed("John"));
         map.put("lastName", new Value().forBraceEnclosed("Doe"));
         
@@ -374,14 +278,6 @@ public class TestInterpolator {
     
     @Test
     public void testMultipleBraceEnclosedSubstituedInPresenceOfOtherBraces_NoSpaces() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("firstName", "John");
-//        session.set("lastName", "Doe");
-//        when(req.getSession()).thenReturn(session);
         
         map.put("firstName", new Value().forBraceEnclosed("John"));
         map.put("lastName", new Value().forBraceEnclosed("Doe"));
@@ -393,14 +289,6 @@ public class TestInterpolator {
     @Test
     public void testMultipleBraceEnclosedSubstituedInPresenceOfOtherBraceEnclosedTerms() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("firstName", "John");
-//        session.set("lastName", "Doe");
-//        when(req.getSession()).thenReturn(session);
-        
         map.put("firstName", new Value().forBraceEnclosed("John"));
         map.put("lastName", new Value().forBraceEnclosed("Doe"));
         
@@ -410,14 +298,6 @@ public class TestInterpolator {
     
     @Test
     public void testMultipleBraceEnclosedSubstituedWithBraceEnclosedValue() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("firstName", "{John}");
-//        session.set("lastName", "{Doe}");
-//        when(req.getSession()).thenReturn(session);
         
         map.put("firstName", new Value().forBraceEnclosed("{John}"));
         map.put("lastName", new Value().forBraceEnclosed("{Doe}"));
@@ -429,15 +309,7 @@ public class TestInterpolator {
     @Test
     public void testPrefixedAndBraceEnclosed_PrefixedValuesComeFirst() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/greet/Mr.");
-//        when(req.getRoute()).thenReturn(new Route("/greet/:salutation"));
-//        Session session = new Session();
-//        session.set("firstName", "John");
-//        session.set("lastName", "Doe");
-//        when(req.getSession()).thenReturn(session);
-        
-        map.put("salutation", new Value().forPrefix("Mr."));
+        map.put("salutation", new Value().forPrefixed("Mr."));
         map.put("firstName", new Value().forBraceEnclosed("John"));
         map.put("lastName", new Value().forBraceEnclosed("Doe"));
         
@@ -448,16 +320,9 @@ public class TestInterpolator {
     @Test
     public void testPrefixedAndBraceEnclosed_BraceEnclosedComeFirst() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/greet/John/Doe");
-//        when(req.getRoute()).thenReturn(new Route("/greet/:firstName/:lastName"));
-//        Session session = new Session();
-//        session.set("salutation", "Mr.");
-//        when(req.getSession()).thenReturn(session);
-        
         map.put("salutation", new Value().forBraceEnclosed("Mr."));
-        map.put("firstName", new Value().forPrefix("John"));
-        map.put("lastName", new Value().forPrefix("Doe"));
+        map.put("firstName", new Value().forPrefixed("John"));
+        map.put("lastName", new Value().forPrefixed("Doe"));
         
         assertEquals("Hello Mr. John Doe", 
                 interpolator.interpolate("Hello {salutation} :firstName :lastName", map));
@@ -471,14 +336,7 @@ public class TestInterpolator {
          * :{name} is not a valid prefixed variable, as its name
          * contains non-alphanumeric characters.
          */
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/John");
-//        when(req.getRoute()).thenReturn(new Route("/name/:{name}"));
-//        Session session = new Session();
-//        session.set("name", "Tim");
-//        when(req.getSession()).thenReturn(session);
-        
-        map.put("{name}", new Value().forPrefix("John"));
+        map.put("{name}", new Value().forPrefixed("John"));
         map.put("name", new Value().forBraceEnclosed("Tim"));
         
         assertEquals("Hello :Tim", 
@@ -488,14 +346,7 @@ public class TestInterpolator {
     @Test
     public void testBraceEnclosedPrefixedValueSubstitutesBraceEnclosed_OneOccurrence() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/John");
-//        when(req.getRoute()).thenReturn(new Route("/name/:name"));
-//        Session session = new Session();
-//        session.set(":name", "Tim");
-//        when(req.getSession()).thenReturn(session);
-        
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         map.put(":name", new Value().forBraceEnclosed("Tim"));
         
         assertEquals("Hello Tim", 
@@ -505,16 +356,8 @@ public class TestInterpolator {
     @Test
     public void testBraceEnclosedPrefixedValueSubstitutesBraceEnclosed_TwoOccurrences() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/John/Doe");
-//        when(req.getRoute()).thenReturn(new Route("/name/:first/:last"));
-//        Session session = new Session();
-//        session.set(":first", "Tom");
-//        session.set(":last", "Jerry");
-//        when(req.getSession()).thenReturn(session);
-        
-        map.put("first", new Value().forPrefix("John"));
-        map.put("last", new Value().forPrefix("Doe"));
+        map.put("first", new Value().forPrefixed("John"));
+        map.put("last", new Value().forPrefixed("Doe"));
         map.put(":first", new Value().forBraceEnclosed("Tom"));
         map.put(":last", new Value().forBraceEnclosed("Jerry"));
         
@@ -525,12 +368,6 @@ public class TestInterpolator {
     @Test
     public void testSquareBracketUnknownValuesIgnored() throws Exception {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getBodyAsStream()).thenReturn(body("Hello World!"));
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        when(req.getSession()).thenReturn(null);
-        
         map.put("request.body", new Value().forBracketEnclosed("Hello World!"));
         
         assertEquals("Message: [some.value]", 
@@ -539,12 +376,6 @@ public class TestInterpolator {
     
     @Test
     public void testSquareBracketSubstituted() throws Exception {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getBodyAsStream()).thenReturn(body("Hello World!"));
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        when(req.getSession()).thenReturn(null);
         
         map.put("request.body", new Value().forBracketEnclosed("Hello World!"));
         
@@ -555,12 +386,6 @@ public class TestInterpolator {
     @Test
     public void testSquareBracketSubstituedInPresenceOfOtherSquareBrackets() throws Exception {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getBodyAsStream()).thenReturn(body("Hello World!"));
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        when(req.getSession()).thenReturn(null);
-        
         map.put("request.body", new Value().forBracketEnclosed("Hello World!"));
         
         assertEquals("Message: [ Hello World! ] [", 
@@ -569,12 +394,6 @@ public class TestInterpolator {
     
     @Test
     public void testSquareBracketSubstituedInPresenceOfOtherSquareBrackets_NoSpaces() throws Exception {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getBodyAsStream()).thenReturn(body("Hello World!"));
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        when(req.getSession()).thenReturn(null);
         
         map.put("request.body", new Value().forBracketEnclosed("Hello World!"));
         
@@ -585,12 +404,6 @@ public class TestInterpolator {
     @Test
     public void testSquareBracketSubstituedInPresenceOfOtherSquareBracketEnclosedTerms() throws Exception {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getBodyAsStream()).thenReturn(body("Tim"));
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        when(req.getSession()).thenReturn(null);
-        
         map.put("request.body", new Value().forBracketEnclosed("Tim"));
         
         assertEquals("Hello [there] Tim", 
@@ -599,12 +412,6 @@ public class TestInterpolator {
     
     @Test
     public void testSquareBracketSubstituedWithSquareBracketEnclosedValue() throws Exception {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getBodyAsStream()).thenReturn(body("[Tim]"));
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        when(req.getSession()).thenReturn(null);
         
         map.put("request.body", new Value().forBracketEnclosed("[Tim]"));
         
@@ -615,16 +422,8 @@ public class TestInterpolator {
     @Test
     public void testPrefixedAndBraceEnclosedAndSquareBracketUsedTogether() throws Exception {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getBodyAsStream()).thenReturn(body("Doe"));
-//        when(req.getUndecodedPath()).thenReturn("/name/John");
-//        when(req.getRoute()).thenReturn(new Route("/name/:name"));
-//        Session session = new Session();
-//        session.set("salutation", "Mr.");
-//        when(req.getSession()).thenReturn(session);
-        
         map.put("salutation", new Value().forBraceEnclosed("Mr."));
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         map.put("request.body", new Value().forBracketEnclosed("Doe"));
         
         assertEquals("Hello Mr. John Doe", 
@@ -633,11 +432,6 @@ public class TestInterpolator {
     
     @Test
     public void testSinglePrefixedSquareBracketSubstitued() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/Tim");
-//        when(req.getRoute()).thenReturn(new Route("/name/*"));
-//        when(req.getSession()).thenReturn(null);
         
         map.put("0", new Value().forPrefixedBracketEnclosed("Tim"));
         
@@ -648,11 +442,6 @@ public class TestInterpolator {
     @Test
     public void testSinglePrefixedSquareBracketSubstituedMultipleTimes() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/Tim");
-//        when(req.getRoute()).thenReturn(new Route("/name/*"));
-//        when(req.getSession()).thenReturn(null);
-        
         map.put("0", new Value().forPrefixedBracketEnclosed("Tim"));
         
         assertEquals("Hello Tim Tim", 
@@ -661,11 +450,6 @@ public class TestInterpolator {
     
     @Test
     public void testSinglePrefixedSquareBracketNotSubstituedWithIncorrectIndex() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/Tim");
-//        when(req.getRoute()).thenReturn(new Route("/name/*"));
-//        when(req.getSession()).thenReturn(null);
         
         map.put("0", new Value().forPrefixedBracketEnclosed("Tim"));
         
@@ -676,11 +460,6 @@ public class TestInterpolator {
     @Test
     public void testSinglePrefixedSquareBracketNotSubstituedIfFormattedIncorrectly() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/Tim");
-//        when(req.getRoute()).thenReturn(new Route("/name/*"));
-//        when(req.getSession()).thenReturn(null);
-        
         map.put("0", new Value().forPrefixedBracketEnclosed("Tim"));
         
         assertEquals("Hello *[ 0]", 
@@ -689,11 +468,6 @@ public class TestInterpolator {
     
     @Test
     public void testSinglePrefixedSquareBracketSubstituedWithSplatContainingValue() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/*[0]");
-//        when(req.getRoute()).thenReturn(new Route("/name/*"));
-//        when(req.getSession()).thenReturn(null);
         
         map.put("0", new Value().forPrefixedBracketEnclosed("*[0]"));
         
@@ -704,11 +478,6 @@ public class TestInterpolator {
     @Test
     public void testSinglePrefixedSquareBracketSubstituedWithEmptyValue() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/");
-//        when(req.getRoute()).thenReturn(new Route("/name/*"));
-//        when(req.getSession()).thenReturn(null);
-        
         map.put("0", new Value().forPrefixedBracketEnclosed(""));
         
         assertEquals("Hello ", 
@@ -718,11 +487,6 @@ public class TestInterpolator {
     @Test
     public void testPrefixedSquareBracketSubstituedWithDoubleDigitIndex() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/a/b/c/d/e/f/g/h/i/j/k");
-//        when(req.getRoute()).thenReturn(new Route("/name/*/*/*/*/*/*/*/*/*/*/*"));
-//        when(req.getSession()).thenReturn(null);
-        
         map.put("10", new Value().forPrefixedBracketEnclosed("k"));
         
         assertEquals("Hello k", 
@@ -731,11 +495,6 @@ public class TestInterpolator {
     
     @Test
     public void testTwoPrefixedSquareBracketsSubstitued() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/John/Doe");
-//        when(req.getRoute()).thenReturn(new Route("/name/*/*"));
-//        when(req.getSession()).thenReturn(null);
         
         map.put("0", new Value().forPrefixedBracketEnclosed("John"));
         map.put("1", new Value().forPrefixedBracketEnclosed("Doe"));
@@ -747,11 +506,6 @@ public class TestInterpolator {
     @Test
     public void testOnlySecondOfTwoPrefixedSquareBracketsSubstitued() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/John/Doe");
-//        when(req.getRoute()).thenReturn(new Route("/name/*/*"));
-//        when(req.getSession()).thenReturn(null);
-        
         map.put("0", new Value().forPrefixedBracketEnclosed("John"));
         map.put("1", new Value().forPrefixedBracketEnclosed("Doe"));
         
@@ -761,11 +515,6 @@ public class TestInterpolator {
     
     @Test
     public void testSubstitutionIncreasesOverallLengthOfString() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/hello/there");
-//        when(req.getRoute()).thenReturn(new Route("/*/*"));
-//        when(req.getSession()).thenReturn(null);
         
         map.put("0", new Value().forPrefixedBracketEnclosed("hello"));
         map.put("1", new Value().forPrefixedBracketEnclosed("there"));
@@ -777,12 +526,7 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithSinglePrefixedWhichExists() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         
         assertEquals("Hello :name", 
                 interpolator.interpolate("Hello ^:name", map));
@@ -791,13 +535,6 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithSinglePrefixedWhichDoesNotExist() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:id"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("id", new Value().forPrefix("John"));
-        
         assertEquals("Hello :name", 
                 interpolator.interpolate("Hello ^:name", map));
     }
@@ -805,13 +542,8 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithMultiplePrefixed_OneEscaped() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John/Doe");
-//        when(req.getRoute()).thenReturn(new Route("/:name1/:name2"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name1", new Value().forPrefix("John"));
-        map.put("name2", new Value().forPrefix("Doe"));
+        map.put("name1", new Value().forPrefixed("John"));
+        map.put("name2", new Value().forPrefixed("Doe"));
         
         assertEquals("Hello :name1 Doe", 
                 interpolator.interpolate("Hello ^:name1 :name2", map));
@@ -820,13 +552,8 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithMultiplePrefixed_MultipleEscaped() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John/Doe");
-//        when(req.getRoute()).thenReturn(new Route("/:name1/:name2"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name1", new Value().forPrefix("John"));
-        map.put("name2", new Value().forPrefix("Doe"));
+        map.put("name1", new Value().forPrefixed("John"));
+        map.put("name2", new Value().forPrefixed("Doe"));
         
         assertEquals("Hello :name1 :name2", 
                 interpolator.interpolate("Hello ^:name1 ^:name2", map));
@@ -835,13 +562,8 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithMultiplePrefixed_MultipleEscapedConcatenated() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John/Doe");
-//        when(req.getRoute()).thenReturn(new Route("/:name1/:name2"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name1", new Value().forPrefix("John"));
-        map.put("name2", new Value().forPrefix("Doe"));
+        map.put("name1", new Value().forPrefixed("John"));
+        map.put("name2", new Value().forPrefixed("Doe"));
         
         assertEquals("Hello :name1:name2", 
                 interpolator.interpolate("Hello ^:name1^:name2", map));
@@ -850,12 +572,7 @@ public class TestInterpolator {
     @Test
     public void testDoubleEscapeWithPrefixed() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         
         assertEquals("Hello ^John", 
                 interpolator.interpolate("Hello ^^:name", map));
@@ -864,12 +581,7 @@ public class TestInterpolator {
     @Test
     public void testTripleEscapeWithPrefixed() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         
         assertEquals("Hello ^:name", 
                 interpolator.interpolate("Hello ^^^:name", map));
@@ -878,12 +590,7 @@ public class TestInterpolator {
     @Test
     public void testQuadrupleEscapeWithPrefixed() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         
         assertEquals("Hello ^^John", 
                 interpolator.interpolate("Hello ^^^^:name", map));
@@ -892,22 +599,12 @@ public class TestInterpolator {
     @Test
     public void testEscapeOnItsOwn() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
         assertEquals("Hello ^ there", 
                 interpolator.interpolate("Hello ^ there", map));
     }
     
     @Test
     public void testDoubleEscapeOnItsOwn() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
         
         assertEquals("Hello ^^ there", 
                 interpolator.interpolate("Hello ^^ there", map));
@@ -916,22 +613,12 @@ public class TestInterpolator {
     @Test
     public void testTripleEscapeOnItsOwn() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
         assertEquals("Hello ^^^ there", 
                 interpolator.interpolate("Hello ^^^ there", map));
     }
     
     @Test
     public void testQuadrupleEscapeOnItsOwn() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
         
         assertEquals("Hello ^^^^ there", 
                 interpolator.interpolate("Hello ^^^^ there", map));
@@ -940,12 +627,7 @@ public class TestInterpolator {
     @Test
     public void testEscapeOnItsOwnWithPrefixed() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         
         assertEquals("Hello ^ John", 
                 interpolator.interpolate("Hello ^ :name", map));
@@ -954,12 +636,7 @@ public class TestInterpolator {
     @Test
     public void testDoubleEscapeOnItsOwnWithPrefixed() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         
         assertEquals("Hello ^^ John", 
                 interpolator.interpolate("Hello ^^ :name", map));
@@ -968,12 +645,7 @@ public class TestInterpolator {
     @Test
     public void testTripleEscapeOnItsOwnWithPrefixed() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         
         assertEquals("Hello ^^^ John", 
                 interpolator.interpolate("Hello ^^^ :name", map));
@@ -982,12 +654,7 @@ public class TestInterpolator {
     @Test
     public void testQuadrupleEscapeOnItsOwnWithPrefixed() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         
         assertEquals("Hello ^^^^ John", 
                 interpolator.interpolate("Hello ^^^^ :name", map));
@@ -996,22 +663,12 @@ public class TestInterpolator {
     @Test
     public void testEscapeNextToNonInterpolatedValue() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
         assertEquals("Hello ^there", 
                 interpolator.interpolate("Hello ^there", map));
     }
     
     @Test
     public void testDoubleEscapeNextToNonInterpolatedValue() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
         
         assertEquals("Hello ^^there", 
                 interpolator.interpolate("Hello ^^there", map));
@@ -1020,22 +677,12 @@ public class TestInterpolator {
     @Test
     public void testTripleEscapeNextToNonInterpolatedValue() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
         assertEquals("Hello ^^^there", 
                 interpolator.interpolate("Hello ^^^there", map));
     }
     
     @Test
     public void testQuadrupleEscapeNextToNonInterpolatedValue() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
         
         assertEquals("Hello ^^^^there", 
                 interpolator.interpolate("Hello ^^^^there", map));
@@ -1044,12 +691,7 @@ public class TestInterpolator {
     @Test
     public void testEscapeAfterPrefixed() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         
         assertEquals("Hello John^", 
                 interpolator.interpolate("Hello :name^", map));
@@ -1058,12 +700,7 @@ public class TestInterpolator {
     @Test
     public void testDoubleEscapeAfterPrefixed() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         
         assertEquals("Hello John^^", 
                 interpolator.interpolate("Hello :name^^", map));
@@ -1072,12 +709,7 @@ public class TestInterpolator {
     @Test
     public void testTripleEscapeAfterPrefixed() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         
         assertEquals("Hello John^^^", 
                 interpolator.interpolate("Hello :name^^^", map));
@@ -1086,12 +718,7 @@ public class TestInterpolator {
     @Test
     public void testQuadrupleEscapeAfterPrefixed() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("John"));
+        map.put("name", new Value().forPrefixed("John"));
         
         assertEquals("Hello John^^^^", 
                 interpolator.interpolate("Hello :name^^^^", map));
@@ -1100,22 +727,12 @@ public class TestInterpolator {
     @Test
     public void testEscapeAfterNonInterpolatedValue() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
         assertEquals("Hello there^", 
                 interpolator.interpolate("Hello there^", map));
     }
     
     @Test
     public void testDoubleEscapeAfterNonInterpolatedValue() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
         
         assertEquals("Hello there^^", 
                 interpolator.interpolate("Hello there^^", map));
@@ -1124,11 +741,6 @@ public class TestInterpolator {
     @Test
     public void testTripleEscapeAfterNonInterpolatedValue() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
         assertEquals("Hello there^^^", 
                 interpolator.interpolate("Hello there^^^", map));
     }
@@ -1136,24 +748,12 @@ public class TestInterpolator {
     @Test
     public void testQuadrupleEscapeAfterNonInterpolatedValue() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
         assertEquals("Hello there^^^^", 
                 interpolator.interpolate("Hello there^^^^", map));
     }
     
     @Test
     public void testEscapeIgnoredInsideBraceEnclosed() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("^name", "Tim");
-//        when(req.getSession()).thenReturn(session);
         
         map.put("^name", new Value().forBraceEnclosed("Tim"));
         
@@ -1164,13 +764,6 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithSingleBraceEnclosedWhichExists() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("name", "Tim");
-//        when(req.getSession()).thenReturn(session);
-        
         map.put("name", new Value().forBraceEnclosed("Tim"));
         
         assertEquals("Hello {name}", 
@@ -1180,29 +773,12 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithSingleBraceEnclosedWhichDoesNotExist() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("id", "Tim");
-//        when(req.getSession()).thenReturn(session);
-        
-        map.put("id", new Value().forBraceEnclosed("Tim"));
-        
         assertEquals("Hello {name}", 
                 interpolator.interpolate("Hello ^{name}", map));
     }
     
     @Test
     public void testEscapeWithMultipleBraceEnclosed_OneEscaped() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("firstName", "John");
-//        session.set("lastName", "Doe");
-//        when(req.getSession()).thenReturn(session);
         
         map.put("firstName", new Value().forBraceEnclosed("John"));
         map.put("lastName", new Value().forBraceEnclosed("Doe"));
@@ -1214,14 +790,6 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithMultipleBraceEnclosed_MultipleEscaped() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        Session session = new Session();
-//        session.set("firstName", "John");
-//        session.set("lastName", "Doe");
-//        when(req.getSession()).thenReturn(session);
-        
         map.put("firstName", new Value().forBraceEnclosed("John"));
         map.put("lastName", new Value().forBraceEnclosed("Doe"));
         
@@ -1232,12 +800,6 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithSingleSquareBracketWhichExists() throws Exception {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getRequestParameter("name")).thenReturn("Tim");
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        when(req.getSession()).thenReturn(null);
-        
         map.put("request?name", new Value().forBracketEnclosed("Tim"));
         
         assertEquals("Hello [request?name]", 
@@ -1247,27 +809,12 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithSingleSquareBracketWhichDoesNotExist() throws Exception {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getRequestParameter("id")).thenReturn("Tim");
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("request?id", new Value().forBracketEnclosed("Tim"));
-        
         assertEquals("Hello [request?name]", 
                 interpolator.interpolate("Hello ^[request?name]", map));
     }
     
     @Test
     public void testEscapeWithMultipleSquareBrackets_OneEscaped() throws Exception {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getRequestParameter("name1")).thenReturn("John");
-//        when(req.getRequestParameter("name2")).thenReturn("Doe");
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        when(req.getSession()).thenReturn(null);
         
         map.put("request?name1", new Value().forBracketEnclosed("John"));
         map.put("request?name2", new Value().forBracketEnclosed("Doe"));
@@ -1279,13 +826,6 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithMultipleSquareBrackets_MultipleEscaped() throws Exception {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getRequestParameter("name1")).thenReturn("John");
-//        when(req.getRequestParameter("name2")).thenReturn("Doe");
-//        when(req.getUndecodedPath()).thenReturn("/");
-//        when(req.getRoute()).thenReturn(new Route("/"));
-//        when(req.getSession()).thenReturn(null);
-        
         map.put("request?name1", new Value().forBracketEnclosed("John"));
         map.put("request?name2", new Value().forBracketEnclosed("Doe"));
         
@@ -1296,11 +836,6 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithSinglePrefixedSquareBracketWhichExists() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/Tim");
-//        when(req.getRoute()).thenReturn(new Route("/name/*"));
-//        when(req.getSession()).thenReturn(null);
-        
         map.put("0", new Value().forPrefixedBracketEnclosed("Tim"));
         
         assertEquals("Hello *[0]", 
@@ -1310,24 +845,12 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithSinglePrefixedSquareBracketWhichDoesNotExist() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/Tim");
-//        when(req.getRoute()).thenReturn(new Route("/name/:name"));
-//        when(req.getSession()).thenReturn(null);
-        
-        map.put("name", new Value().forPrefix("Tim"));
-        
         assertEquals("Hello *[0]", 
                 interpolator.interpolate("Hello ^*[0]", map));
     }
     
     @Test
     public void testEscapeWithMultiplePrefixedSquareBrackets_OneEscaped() {
-        
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/John/Doe");
-//        when(req.getRoute()).thenReturn(new Route("/name/*/*"));
-//        when(req.getSession()).thenReturn(null);
         
         map.put("0", new Value().forPrefixedBracketEnclosed("John"));
         map.put("1", new Value().forPrefixedBracketEnclosed("Doe"));
@@ -1339,11 +862,6 @@ public class TestInterpolator {
     @Test
     public void testEscapeWithMultiplePrefixedSquareBrackets_MultipleEscaped() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/name/John/Doe");
-//        when(req.getRoute()).thenReturn(new Route("/name/*/*"));
-//        when(req.getSession()).thenReturn(null);
-        
         map.put("0", new Value().forPrefixedBracketEnclosed("John"));
         map.put("1", new Value().forPrefixedBracketEnclosed("Doe"));
         
@@ -1354,14 +872,7 @@ public class TestInterpolator {
     @Test
     public void testEscapeBraceEnclosedWithPrefixedName() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/John");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        Session session = new Session();
-//        session.set("name", ":name");
-//        when(req.getSession()).thenReturn(session);
-        
-        map.put("name", new Value().forPrefix("John")
+        map.put("name", new Value().forPrefixed("John")
                                    .forBraceEnclosed(":name"));
         
         assertEquals("Hello {name}", 
@@ -1371,31 +882,99 @@ public class TestInterpolator {
     @Test
     public void testEscapePrefixedWithBraceEnclosedName() {
         
-//        HttpRequest req = mock(HttpRequest.class);
-//        when(req.getUndecodedPath()).thenReturn("/{name}");
-//        when(req.getRoute()).thenReturn(new Route("/:name"));
-//        Session session = new Session();
-//        session.set("name", "Tim");
-//        when(req.getSession()).thenReturn(session);
-        
-        map.put("name", new Value().forPrefix("{name}")
+        map.put("name", new Value().forPrefixed("{name}")
                                    .forBraceEnclosed("Tim"));
         
         assertEquals("Hello :name", 
                 interpolator.interpolate("Hello ^:name", map));
     }
     
+    @Test
+    public void testPrefixedBracketEnclosedSubstitutedForAny() {
+        
+        /*
+         * Even though we have a match for "[]",
+         * and a value for any kind of match, the 
+         * result should not be "Hello *John"
+         */
+        map.put("0", new Value().forAny("John"));
+        
+        assertEquals("Hello John", 
+                interpolator.interpolate("Hello *[0]", map));
+    }
+    
+    @Test
+    public void testEscapeWithSinglePrefixedSquareBracketWhichExistsForAny() {
+        
+        /*
+         * Even though we have a match for "[]",
+         * and a value for any kind of match, the 
+         * result should not be "Hello *Tim"
+         */
+        map.put("0", new Value().forAny("Tim"));
+        
+        assertEquals("Hello *[0]", 
+                interpolator.interpolate("Hello ^*[0]", map));
+    }
+    
     /*-----------------------------------*/
+    
+    private static class ValueMap {
+        
+        private Map<String, Value> map = new HashMap<String, Value>();
+        
+        public Value put(String key, Value value) {
+            return map.put(key, value);
+        }
+        
+        public String getForPrefixed(String captured) {
+            
+            Value val = map.get(captured);
+            if (hasForAny(val)) return val.getForAny();
+            return val != null ? val.getForPrefixed() : null;
+        }
+        
+        public String getForBraceEnclosed(String captured) {
+            
+            Value val = map.get(captured);
+            if (hasForAny(val)) return val.getForAny();
+            return val != null ? val.getForBraceEnclosed() : null;
+        }
+        
+        public String getForBracketEnclosed(String captured) {
+            
+            Value val = map.get(captured);
+            if (hasForAny(val)) return val.getForAny();
+            return val != null ? val.getForBracketEnclosed() : null;
+        }
+        
+        public String getForPrefixedBracketEnclosed(String captured) {
+            
+            Value val = map.get(captured);
+            if (hasForAny(val)) return val.getForAny();
+            return val != null ? val.getForPrefixedBracketEnclosed() : null;
+        }
+        
+        private boolean hasForAny(Value val) {
+            return val != null && val.getForAny() != null;
+        }
+    }
     
     private static class Value {
         
-        public String forPrefix;
-        public String forBraceEnclosed;
-        public String forBracketEnclosed;
-        public String forPrefixedBracketEnclosed;
+        private String forAny;
+        private String forPrefixed;
+        private String forBraceEnclosed;
+        private String forBracketEnclosed;
+        private String forPrefixedBracketEnclosed;
         
-        public Value forPrefix(String val) {
-            forPrefix = val;
+        public Value forAny(String val) {
+            forAny = val;
+            return this;
+        }
+        
+        public Value forPrefixed(String val) {
+            forPrefixed = val;
             return this;
         }
         
@@ -1414,8 +993,12 @@ public class TestInterpolator {
             return this;
         }
         
-        public String getForPrefix() {
-            return forPrefix;
+        public String getForAny() {
+            return forAny;
+        }
+        
+        public String getForPrefixed() {
+            return forPrefixed;
         }
 
         public String getForBraceEnclosed() {

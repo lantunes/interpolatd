@@ -23,8 +23,8 @@ import org.bigtesting.interpolatd.PrefixHandler;
  * 
  * @author Luis Antunes
  */
-public class PrefixHandlerImpl extends SubstitutionHandlerImpl
-    implements PrefixHandler {
+public class PrefixHandlerImpl<T> extends SubstitutionHandlerImpl<T>
+    implements PrefixHandler<T> {
 
     private final Pattern pattern;
     
@@ -36,9 +36,9 @@ public class PrefixHandlerImpl extends SubstitutionHandlerImpl
         
         String quotedPrefix = Pattern.quote(prefix);
         if (characterClass == null) {
-            characterClass = "[^" + quotedPrefix + "\\s]";
+            characterClass = "[^" + quotedPrefix + "\\s]+";
         }
-        this.pattern = Pattern.compile("(" + quotedPrefix + characterClass + "+)");
+        this.pattern = Pattern.compile("(" + quotedPrefix + characterClass + ")");
     }
     
     @Override

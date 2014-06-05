@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
  * 
  * @author Luis Antunes
  */
-public class EscapeHandler implements Interpolating {
+public class EscapeHandler<T> implements Interpolating<T> {
 
     private final String escape;
     private final Pattern pattern;
@@ -35,7 +35,7 @@ public class EscapeHandler implements Interpolating {
         this.pattern = Pattern.compile("(" + Pattern.quote(escape) + ")");
     }
 
-    public List<Substitution> interpolate(String toInterpolate, Object arg) {
+    public List<Substitution> interpolate(String toInterpolate, T arg) {
         
         List<Substitution> substitutions = new ArrayList<Substitution>(); 
         Matcher m = pattern.matcher(toInterpolate);

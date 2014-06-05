@@ -19,7 +19,7 @@ package org.bigtesting.interpolatd;
  * 
  * @author Luis Antunes
  */
-public interface EnclosureOpeningHandler {
+public interface EnclosureOpeningHandler<T> {
 
-    EnclosureClosingHandler and(String closing);
+    EnclosureClosingHandler<T> and(String closing);
 }

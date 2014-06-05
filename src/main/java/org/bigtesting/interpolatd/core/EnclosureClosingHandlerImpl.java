@@ -23,8 +23,8 @@ import org.bigtesting.interpolatd.EnclosureClosingHandler;
  * 
  * @author Luis Antunes
  */
-public class EnclosureClosingHandlerImpl extends SubstitutionHandlerImpl 
-    implements EnclosureClosingHandler {
+public class EnclosureClosingHandlerImpl<T> extends SubstitutionHandlerImpl<T> 
+    implements EnclosureClosingHandler<T> {
 
     private final String opening;
     private final String closing;
@@ -39,9 +39,9 @@ public class EnclosureClosingHandlerImpl extends SubstitutionHandlerImpl
         String quotedOpening = Pattern.quote(opening);
         String quotedClosing = Pattern.quote(closing);
         if (characterClass == null) {
-            characterClass = "[^" + quotedOpening + quotedClosing + "\\s]";
+            characterClass = "[^" + quotedOpening + quotedClosing + "\\s]+";
         }
-        this.pattern = Pattern.compile("(" + quotedOpening + characterClass + "+" + quotedClosing + ")");
+        this.pattern = Pattern.compile("(" + quotedOpening + characterClass + quotedClosing + ")");
     }
 
     @Override

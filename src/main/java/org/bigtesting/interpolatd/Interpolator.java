@@ -28,33 +28,33 @@ import org.bigtesting.interpolatd.core.Substitution;
  * 
  * @author Luis Antunes
  */
-public class Interpolator {
+public class Interpolator<T> {
     
-    private final List<Interpolating> interpolating = new ArrayList<Interpolating>();
+    private final List<Interpolating<T>> interpolating = new ArrayList<Interpolating<T>>();
     
-    public InterpolationHandler when() {
+    public InterpolationHandler<T> when() {
         
-        InterpolationHandlerImpl handler = new InterpolationHandlerImpl();
+        InterpolationHandlerImpl<T> handler = new InterpolationHandlerImpl<T>();
         interpolating.add(handler);
         return handler;
     }
     
-    public InterpolationHandler when(String characterClass) {
+    public InterpolationHandler<T> when(String characterClass) {
         
-        InterpolationHandlerImpl handler = new InterpolationHandlerImpl(characterClass);
+        InterpolationHandlerImpl<T> handler = new InterpolationHandlerImpl<T>(characterClass);
         interpolating.add(handler);
         return handler;
     }
 
     public void escapeWith(String escape) {
         
-        interpolating.add(new EscapeHandler(escape));
+        interpolating.add(new EscapeHandler<T>(escape));
     }
     
-    public String interpolate(String toInterpolate, Object arg) {
+    public String interpolate(String toInterpolate, T arg) {
         
         List<Substitution> substitutions = new ArrayList<Substitution>();
-        for (Interpolating handler : interpolating) {
+        for (Interpolating<T> handler : interpolating) {
             
             substitutions.addAll(handler.interpolate(toInterpolate, arg));
         }
@@ -85,6 +85,7 @@ public class Interpolator {
                 
             } else if (lastEscape != null && sub.isAfter(lastEscape)) {
                 
+                lastEnd = sub.end();
                 continue;
             }
             
@@ -97,11 +98,11 @@ public class Interpolator {
         return sb.toString();
     }
     
-    private boolean isActualEscape(Substitution esc, List<Substitution> substitutions, int currentIndex) {
+    private boolean isActualEscape(Substitution esc, List<Substitution> substitutions, int index) {
         
-        if (!hasNext(substitutions, currentIndex)) return false;
+        if (!hasNext(substitutions, index)) return false;
         
-        Substitution nextSub = getNext(substitutions, currentIndex);
+        Substitution nextSub = getNext(substitutions, index);
         
         if (!nextSub.isAfter(esc)) return false;
         
@@ -111,7 +112,7 @@ public class Interpolator {
          * nextSub is an escape immediately after the current escape;
          * look ahead to see if a non-escape substitution occurs
          */
-        return isActualEscape(nextSub, substitutions, ++currentIndex);
+        return isActualEscape(nextSub, substitutions, ++index);
     }
     
     private boolean hasNext(List<Substitution> substitutions, int currentIndex) {

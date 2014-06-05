@@ -19,7 +19,7 @@ package org.bigtesting.interpolatd;
  * 
  * @author Luis Antunes
  */
-public interface SubstitutionHandler {
+public interface SubstitutionHandler<T> {
 
-    void handleWith(Substitutor substitutor);
+    void handleWith(Substitutor<T> substitutor);
 }

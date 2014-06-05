@@ -19,9 +19,9 @@ package org.bigtesting.interpolatd;
  * 
  * @author Luis Antunes
  */
-public interface InterpolationHandler {
+public interface InterpolationHandler<T> {
 
-    PrefixHandler prefixedBy(String prefix);
+    PrefixHandler<T> prefixedBy(String prefix);
     
-    EnclosureOpeningHandler enclosedBy(String opening);
+    EnclosureOpeningHandler<T> enclosedBy(String opening);
 }

@@ -19,7 +19,7 @@ package org.bigtesting.interpolatd;
  * 
  * @author Luis Antunes
  */
-public interface PrefixHandler extends SubstitutionHandler {
+public interface PrefixHandler<T> extends SubstitutionHandler<T> {
     /*
      * Just a marker interface for now 
      */
