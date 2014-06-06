@@ -2,7 +2,7 @@
 -------------
 
 Interpolatd is a string interpolation library for Java. It aspires to be easy to
-use and yet flexible and powerful.
+use and yet flexible and powerful. It is string interpolation done right.
 
 ## Getting Started
 ------------------
