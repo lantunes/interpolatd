@@ -7,8 +7,16 @@ use and yet flexible and powerful.
 ## Getting Started
 ------------------
 
-First you'll need to clone this project and build it, and use the resulting jar. 
-There are no dependencies. Interpolatd will eventually move to Maven central.
+Download [the latest .jar](http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=org.bigtesting&a=interpolatd&v=LATEST).
+Or, add the following dependency to your pom.xml:
+
+```xml
+<dependency>
+    <groupId>org.bigtesting</groupId>
+    <artifactId>interpolatd</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
 
 ## Usage
 --------
