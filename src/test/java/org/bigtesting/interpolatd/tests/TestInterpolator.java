@@ -524,6 +524,16 @@ public class TestInterpolator {
     }
     
     @Test
+    public void testSubstitutionDecreasesOverallLengthOfString() {
+        
+        map.put("0", new Value().forPrefixedBracketEnclosed("a"));
+        map.put("1", new Value().forPrefixedBracketEnclosed("b"));
+        
+        assertEquals("a b", 
+                interpolator.interpolate("*[0] *[1]", map));
+    }
+    
+    @Test
     public void testEscapeWithSinglePrefixedWhichExists() {
         
         map.put("name", new Value().forPrefixed("John"));
