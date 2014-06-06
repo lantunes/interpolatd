@@ -32,10 +32,10 @@ Interpolator<String> interpolator = new Interpolator<String>();
 ```
 
 The Interpolator class is generic. The type parameter is the type of 
-argument (in this case a String) expected in the interpolator's *interpolate()*
+argument (in this case a String) expected in the Interpolator's *interpolate()*
 method, as you'll see next.
 
-Next, you configure the interpolator:
+Next, you configure the Interpolator:
 
 ```java
 interpolator.when().enclosedBy("#{").and("}")
@@ -46,7 +46,7 @@ interpolator.when().enclosedBy("#{").and("}")
     });
 ```
 
-In the snippet above, we are configuring the interpolator such that it
+In the snippet above, we are configuring the Interpolator such that it
 will substitute anything enclosed by *#{* and *}*. The *handleWith()* method
 accepts a **Substitutor**. The Substitutor is also generic, and its 
 type parameter must match the Interpolator's type parameter. In the
@@ -54,7 +54,7 @@ Subsitutor's *subsitute()* method, the *captured* argument is the value
 captured by the pattern. In the example above, this will be the value
 between the *#{* and *}*.
 
-Next, you call the *interpolate()* method of the interpolator:
+Next, you call the *interpolate()* method of the Interpolator:
 
 ```java
 interpolator.interpolate("Hello #{name}!", "World");
@@ -72,10 +72,10 @@ interpolator.when().prefixedBy(":")
     });
 ```
 
-The interpolator will now interpolate a String like *"Hello :name!"*.
+The Interpolator will now interpolate a String like *"Hello :name!"*.
 
 There's no reason we need to be limited to one pattern or another.
-With the interpolator configured as above, we can interpolate Strings
+With the Interpolator configured as above, we can interpolate Strings
 containing both patterns:
 
 ```java
@@ -91,7 +91,7 @@ value of the captured argument.
 ### Character Classes
 
 If you want to place restrictions on what can be prefixed or enclosed, you 
-can specify your own character classes while configuring the interpolator:
+can specify your own character classes while configuring the Interpolator:
 
 ```java
 Interpolator<String[]> interpolator = new Interpolator<String[]>();
@@ -106,7 +106,7 @@ interpolator.when("[0-9]").enclosedBy("#{").and("}")
 
 In the configuration above, we are saying that only single digits
 from 0-9 that are enclosed by *#{* and *}* should be substituted.
-We can then use the interpolator as follows:
+We can then use the Interpolator as follows:
 
 ```java
 interpolator.interpolate("Hello #{0}, #{1}, but not #{you}.", 
@@ -120,7 +120,7 @@ be matched, by using *"[0-9]+"* as an argument, etc.
 ### Escaping Substitution Patterns
 
 At times, you may want to escape substitution patterns. The 
-interpolator will not substitute patterns if there is no value to 
+Interpolator will not substitute patterns if there is no value to 
 substitute with. For example, if the Substitutor returns null when 
 asked to handle *"Hello #{name}"*, the interpolation result will 
 be *"Hello #{name}"*. However, if you want to explicitly escape a 
